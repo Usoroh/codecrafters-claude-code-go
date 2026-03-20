@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"fmt"
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/shared"
 	"os"
@@ -33,11 +34,20 @@ func (rt ReadTool) GetTool() openai.ChatCompletionToolUnionParam {
 
 // Execute reads the file provided in arguments
 func (rt ReadTool) Execute(args map[string]any) (string, error) {
-	fileName := args["file_path"].(string)
-	file, err := os.ReadFile(fileName)
-	if err != nil {
-		return "", err
+	val, ok := args["file_path"]
+	if !ok {
+		return "", fmt.Errorf("missing required argument: file_path")
 	}
 
-	return string(file), nil
+	fileName, ok := val.(string)
+	if !ok {
+		return "", fmt.Errorf("file_path must be a string")
+	}
+
+	content, err := os.ReadFile(fileName)
+	if err != nil {
+		return "", fmt.Errorf("file_path [%s]: %w", fileName, err)
+	}
+
+	return string(content), nil
 }

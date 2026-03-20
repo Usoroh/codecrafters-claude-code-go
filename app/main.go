@@ -59,19 +59,17 @@ func main() {
 
 	// handle tool calls
 	if len(resp.Choices[0].Message.ToolCalls) > 0 {
-		name := resp.Choices[0].Message.ToolCalls[0].Function.Name
-		if name == tools.Read {
-			rawArgs := resp.Choices[0].Message.ToolCalls[0].Function.Arguments
-			var args map[string]any
+		toolCall := resp.Choices[0].Message.ToolCalls[0]
 
-			err := json.Unmarshal([]byte(rawArgs), &args)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error unmarshalling tool arguments: %v\n", err)
-			}
+		var args map[string]any
+		if err := json.Unmarshal([]byte(toolCall.Function.Arguments), &args); err != nil {
+			fmt.Fprintf(os.Stderr, "error unmarshalling tool arguments: %v\n", err)
+		}
 
+		if toolCall.Function.Name == tools.Read {
 			result, err := readTool.Execute(args)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error executing tool: %v\n", err)
+				fmt.Fprintf(os.Stderr, "error executing tool: %v\n", err)
 			}
 
 			fmt.Println(result)
