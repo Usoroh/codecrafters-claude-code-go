@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/codecrafters-io/claude-code-starter-go/app/tools"
@@ -30,6 +31,8 @@ func main() {
 		panic("Env variable OPENROUTER_API_KEY not found")
 	}
 
+	readTool := tools.ReadTool{}
+
 	client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
 	resp, err := client.Chat.Completions.New(context.Background(),
 		openai.ChatCompletionNewParams{
@@ -43,7 +46,7 @@ func main() {
 					},
 				},
 			},
-			Tools: []openai.ChatCompletionToolUnionParam{tools.GetReadTool()},
+			Tools: []openai.ChatCompletionToolUnionParam{readTool.GetTool()},
 		},
 	)
 	if err != nil {
@@ -54,8 +57,26 @@ func main() {
 		panic("No choices in response")
 	}
 
-	// You can use print statements as follows for debugging, they'll be visible when running tests.
-	fmt.Fprintln(os.Stderr, "Logs from your program will appear here!")
+	// handle tool calls
+	if len(resp.Choices[0].Message.ToolCalls) > 0 {
+		name := resp.Choices[0].Message.ToolCalls[0].Function.Name
+		if name == tools.Read {
+			rawArgs := resp.Choices[0].Message.ToolCalls[0].Function.Arguments
+			var args map[string]any
+
+			err := json.Unmarshal([]byte(rawArgs), &args)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error unmarshalling tool arguments: %v\n", err)
+			}
+
+			result, err := readTool.Execute(args)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error executing tool: %v\n", err)
+			}
+
+			fmt.Println(result)
+		}
+	}
 
 	// TODO: Uncomment the line below to pass the first stage
 	fmt.Print(resp.Choices[0].Message.Content)

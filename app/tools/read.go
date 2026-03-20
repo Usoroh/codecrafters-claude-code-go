@@ -3,14 +3,18 @@ package tools
 import (
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/shared"
+	"os"
 )
 
-// GetReadTool returns the tool definition for reading file contents.
-func GetReadTool() openai.ChatCompletionToolUnionParam {
+type ReadTool struct {
+}
+
+// GetTool returns the tool definition for reading file contents.
+func (rt ReadTool) GetTool() openai.ChatCompletionToolUnionParam {
 	return openai.ChatCompletionToolUnionParam{
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: shared.FunctionDefinitionParam{
-				Name:        "Read",
+				Name:        Read,
 				Description: openai.String("Read and return the contents of a file"),
 				Parameters: map[string]any{
 					"type": "object",
@@ -25,4 +29,15 @@ func GetReadTool() openai.ChatCompletionToolUnionParam {
 			},
 		},
 	}
+}
+
+// Execute reads the file provided in arguments
+func (rt ReadTool) Execute(args map[string]any) (string, error) {
+	fileName := args["file_path"].(string)
+	file, err := os.ReadFile(fileName)
+	if err != nil {
+		return "", err
+	}
+
+	return string(file), nil
 }
