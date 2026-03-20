@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/codecrafters-io/claude-code-starter-go/app/tools"
 	"os"
 
 	"github.com/openai/openai-go/v3"
@@ -42,6 +43,7 @@ func main() {
 					},
 				},
 			},
+			Tools: []openai.ChatCompletionToolUnionParam{tools.GetReadTool()},
 		},
 	)
 	if err != nil {
