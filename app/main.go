@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/codecrafters-io/claude-code-starter-go/app/tools"
@@ -72,7 +71,7 @@ func main() {
 		}
 
 		for _, toolCall := range message.ToolCalls {
-			content, err := getToolCallResult(toolCall)
+			content, err := tools.GetToolCallResult(toolCall)
 			if err != nil {
 				content = err.Error()
 			}
@@ -87,34 +86,4 @@ func main() {
 			})
 		}
 	}
-}
-
-// getToolCallResult return the result of a tool call
-func getToolCallResult(toolCall openai.ChatCompletionMessageToolCallUnion) (string, error) {
-	var args map[string]any
-	if err := json.Unmarshal([]byte(toolCall.Function.Arguments), &args); err != nil {
-		return "", fmt.Errorf("error unmarshalling tool arguments: %v\n", err)
-	}
-
-	tool, ok := getTool(toolCall.Function.Name)
-	if !ok {
-		return "", fmt.Errorf("error getting tool: %v\n", toolCall.Function.Name)
-	}
-
-	result, err := tool.Execute(args)
-	if err != nil {
-		return "", fmt.Errorf("error executing tool: %v\n", err)
-	}
-
-	return result, nil
-}
-
-// getTool returns a tool when given its name
-func getTool(name string) (tools.Tool, bool) {
-	toolMap := map[string]tools.Tool{
-		tools.Read: tools.ReadTool{},
-	}
-
-	tool, ok := toolMap[name]
-	return tool, ok
 }

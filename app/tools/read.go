@@ -2,13 +2,13 @@ package tools
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/shared"
-	"os"
 )
 
-type ReadTool struct {
-}
+type ReadTool struct{}
 
 // GetTool returns the tool definition for reading file contents.
 func (rt ReadTool) GetTool() openai.ChatCompletionToolUnionParam {
@@ -34,14 +34,9 @@ func (rt ReadTool) GetTool() openai.ChatCompletionToolUnionParam {
 
 // Execute reads the file provided in arguments
 func (rt ReadTool) Execute(args map[string]any) (string, error) {
-	val, ok := args["file_path"]
-	if !ok {
-		return "", fmt.Errorf("missing required argument: file_path")
-	}
-
-	fileName, ok := val.(string)
-	if !ok {
-		return "", fmt.Errorf("file_path must be a string")
+	fileName, err := getStringArg(args, "file_path")
+	if err != nil {
+		return "", err
 	}
 
 	content, err := os.ReadFile(fileName)
