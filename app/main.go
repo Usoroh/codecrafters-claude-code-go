@@ -79,6 +79,7 @@ func main() {
 
 			messages = append(messages, openai.ChatCompletionMessageParamUnion{
 				OfTool: &openai.ChatCompletionToolMessageParam{
+					ToolCallID: toolCall.ID,
 					Content: openai.ChatCompletionToolMessageParamContentUnion{
 						OfString: openai.String(content),
 					},
@@ -104,8 +105,6 @@ func getToolCallResult(toolCall openai.ChatCompletionMessageToolCallUnion) (stri
 	if err != nil {
 		return "", fmt.Errorf("error executing tool: %v\n", err)
 	}
-
-	fmt.Println("RESULT: ", result)
 
 	return result, nil
 }
