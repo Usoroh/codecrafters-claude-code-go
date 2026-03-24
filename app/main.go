@@ -30,8 +30,6 @@ func main() {
 		panic("Env variable OPENROUTER_API_KEY not found")
 	}
 
-	readTool := tools.ReadTool{}
-
 	client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
 
 	messages := []openai.ChatCompletionMessageParamUnion{
@@ -49,7 +47,7 @@ func main() {
 			openai.ChatCompletionNewParams{
 				Model:    "anthropic/claude-haiku-4.5",
 				Messages: messages,
-				Tools:    []openai.ChatCompletionToolUnionParam{readTool.GetTool()},
+				Tools:    []openai.ChatCompletionToolUnionParam{tools.ReadTool{}.GetTool(), tools.WriteTool{}.GetTool()},
 			},
 		)
 		if err != nil {
