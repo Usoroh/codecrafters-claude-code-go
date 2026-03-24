@@ -9,6 +9,7 @@ import (
 const (
 	Read  = "Read"
 	Write = "Write"
+	Bash  = "Bash"
 )
 
 type Tool interface {
@@ -56,6 +57,7 @@ func getTool(name string) (Tool, bool) {
 	toolMap := map[string]Tool{
 		Read:  ReadTool{},
 		Write: WriteTool{},
+		Bash:  BashTool{},
 	}
 
 	tool, ok := toolMap[name]

@@ -36,6 +36,7 @@ func (wt WriteTool) GetTool() openai.ChatCompletionToolUnionParam {
 	}
 }
 
+// Execute writes content to a file
 func (wt WriteTool) Execute(args map[string]any) (string, error) {
 	fileName, err := getStringArg(args, "file_path")
 	if err != nil {
