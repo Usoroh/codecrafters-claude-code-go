@@ -10,12 +10,14 @@ import (
 
 type ReadTool struct{}
 
+func init() { Register("Read", ReadTool{}) }
+
 // GetTool returns the tool definition for reading file contents.
 func (rt ReadTool) GetTool() openai.ChatCompletionToolUnionParam {
 	return openai.ChatCompletionToolUnionParam{
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: shared.FunctionDefinitionParam{
-				Name:        Read,
+				Name:        "Read",
 				Description: openai.String("Read and return the contents of a file"),
 				Parameters: map[string]any{
 					"type": "object",

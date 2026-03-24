@@ -17,20 +17,22 @@ func main() {
 	flag.Parse()
 
 	if prompt == "" {
-		panic("Prompt must not be empty")
+		fmt.Fprintln(os.Stderr, "Prompt must not be empty")
+		os.Exit(1)
 	}
 
 	apiKey := os.Getenv("OPENROUTER_API_KEY")
-	baseUrl := os.Getenv("OPENROUTER_BASE_URL")
-	if baseUrl == "" {
-		baseUrl = "https://openrouter.ai/api/v1"
+	baseURL := os.Getenv("OPENROUTER_BASE_URL")
+	if baseURL == "" {
+		baseURL = "https://openrouter.ai/api/v1"
 	}
 
 	if apiKey == "" {
-		panic("Env variable OPENROUTER_API_KEY not found")
+		fmt.Fprintln(os.Stderr, "Env variable OPENROUTER_API_KEY not found")
+		os.Exit(1)
 	}
 
-	client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseUrl))
+	client := openai.NewClient(option.WithAPIKey(apiKey), option.WithBaseURL(baseURL))
 
 	messages := []openai.ChatCompletionMessageParamUnion{
 		{
@@ -47,11 +49,7 @@ func main() {
 			openai.ChatCompletionNewParams{
 				Model:    "anthropic/claude-haiku-4.5",
 				Messages: messages,
-				Tools: []openai.ChatCompletionToolUnionParam{
-					tools.ReadTool{}.GetTool(),
-					tools.WriteTool{}.GetTool(),
-					tools.BashTool{}.GetTool(),
-				},
+				Tools: tools.AllTools(),
 			},
 		)
 		if err != nil {
@@ -60,7 +58,8 @@ func main() {
 		}
 
 		if len(resp.Choices) == 0 {
-			panic("No choices in response")
+			fmt.Fprintln(os.Stderr, "No choices in response")
+			os.Exit(1)
 		}
 
 		message := resp.Choices[0].Message
@@ -68,7 +67,7 @@ func main() {
 		messages = append(messages, message.ToParam())
 
 		if len(message.ToolCalls) == 0 {
-			fmt.Fprintf(os.Stdout, message.Content)
+			fmt.Fprint(os.Stdout, message.Content)
 			os.Exit(0)
 		}
 

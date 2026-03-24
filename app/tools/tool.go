@@ -3,28 +3,41 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/openai/openai-go/v3"
 )
 
-const (
-	Read  = "Read"
-	Write = "Write"
-	Bash  = "Bash"
-)
-
+// Tool defines the interface that all tools must implement.
 type Tool interface {
 	GetTool() openai.ChatCompletionToolUnionParam
 	Execute(args map[string]any) (string, error)
 }
 
-// GetToolCallResult return the result of a tool call
+var registry = map[string]Tool{}
+
+// Register adds a tool to the global registry
+func Register(name string, t Tool) {
+	registry[name] = t
+}
+
+// AllTools returns the tool schemas for all registered tools.
+func AllTools() []openai.ChatCompletionToolUnionParam {
+	params := make([]openai.ChatCompletionToolUnionParam, 0, len(registry))
+	for _, t := range registry {
+		params = append(params, t.GetTool())
+	}
+
+	return params
+}
+
+// GetToolCallResult executes a tool call and returns its result.
 func GetToolCallResult(toolCall openai.ChatCompletionMessageToolCallUnion) (string, error) {
 	var args map[string]any
 	if err := json.Unmarshal([]byte(toolCall.Function.Arguments), &args); err != nil {
 		return "", fmt.Errorf("error unmarshalling tool arguments: %w", err)
 	}
 
-	tool, ok := getTool(toolCall.Function.Name)
+	tool, ok := registry[toolCall.Function.Name]
 	if !ok {
 		return "", fmt.Errorf("unknown tool: %s", toolCall.Function.Name)
 	}
@@ -50,17 +63,4 @@ func getStringArg(args map[string]any, key string) (string, error) {
 	}
 
 	return s, nil
-}
-
-// getTool returns a tool when given its name
-func getTool(name string) (Tool, bool) {
-	toolMap := map[string]Tool{
-		Read:  ReadTool{},
-		Write: WriteTool{},
-		Bash:  BashTool{},
-	}
-
-	tool, ok := toolMap[name]
-
-	return tool, ok
 }

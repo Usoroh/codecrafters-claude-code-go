@@ -10,12 +10,14 @@ import (
 
 type BashTool struct{}
 
-// GetTool returns the tool definition for reading file contents.
+func init() { Register("Bash", BashTool{}) }
+
+// GetTool returns the tool definition for executing shell commands.
 func (bt BashTool) GetTool() openai.ChatCompletionToolUnionParam {
 	return openai.ChatCompletionToolUnionParam{
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: shared.FunctionDefinitionParam{
-				Name:        Bash,
+				Name:        "Bash",
 				Description: openai.String("Execute a shell command"),
 				Parameters: map[string]any{
 					"type": "object",
