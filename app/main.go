@@ -105,6 +105,8 @@ func getToolCallResult(toolCall openai.ChatCompletionMessageToolCallUnion) (stri
 		return "", fmt.Errorf("error executing tool: %v\n", err)
 	}
 
+	fmt.Println("RESULT: ", result)
+
 	return result, nil
 }
 
