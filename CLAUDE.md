@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a CodeCrafters "Build Your Own Claude Code" challenge solution in Go. The program implements an LLM-powered coding assistant that communicates with an OpenAI-compatible API (OpenRouter) and supports tool calling.
+This is a CodeCrafters "Build Your Own Claude Code" challenge solution in Go. The program implements an LLM-powered coding assistant that communicates with an OpenAI-compatible API (OpenRouter) and supports tool calling (Read, Write, Bash).
 
 ## Build & Run Commands
 
@@ -26,8 +26,14 @@ codecrafters submit
 
 ## Architecture
 
-- **`app/main.go`**: Entry point. Parses `-p` flag for the prompt, creates an OpenAI client pointed at OpenRouter, sends chat completion requests with tool definitions, and prints the response.
-- **`app/tools/schema.go`**: Defines the JSON-serializable types (`Tool`, `Function`, `Parameters`, `Property`) for OpenAI-compatible tool/function calling schema.
-- **`app/tools/read.go`**: Defines the `Read` tool (file reading capability) using the schema types.
+- **`app/main.go`**: Entry point. Parses `-p` flag, creates an OpenAI client pointed at OpenRouter, and runs the agentic loop: sends chat completions, executes any tool calls, appends results to the conversation, and repeats until the model returns a plain text response.
+- **`app/tools/tool.go`**: Defines the `Tool` interface (`GetTool()` + `Execute()`), a global name→tool registry, and the `GetToolCallResult` dispatcher that unmarshals arguments and routes to the correct tool. Also has `getStringArg` helper for extracting required string args.
+- **`app/tools/{read,write,bash}.go`**: Individual tool implementations. Each is a struct implementing the `Tool` interface, self-registering via `init()` + `Register()`.
 
-The program uses `github.com/openai/openai-go/v3` to talk to the OpenRouter API with model `anthropic/claude-haiku-4.5`. Tools are registered by passing them in the `Tools` field of the chat completion request. New tools should follow the pattern in `read.go`: define a `GetXTool()` function returning a `Tool` struct.
+### Adding a new tool
+
+1. Create `app/tools/mytool.go` with a struct implementing `Tool` (methods: `GetTool()`, `Execute(args map[string]any)`).
+2. Add `func init() { Register("MyTool", MyToolStruct{}) }` — this auto-registers it at startup.
+3. No changes needed in `main.go`; `tools.AllTools()` picks up all registered tools.
+
+The program uses `github.com/openai/openai-go/v3` to talk to the OpenRouter API with model `anthropic/claude-haiku-4.5`.
